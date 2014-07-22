@@ -1,5 +1,4 @@
 require_relative 'questions_database'
-require_relative 'user'
 
 class QuestionFollower
 
@@ -67,7 +66,6 @@ class QuestionFollower
     query[0...n].each_with_object([]) do |data, questions|
       questions << Question.new(data)
     end
-
   end
 
   attr_accessor :id, :question_id, :user_id

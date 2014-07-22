@@ -1,6 +1,4 @@
 require_relative 'questions_database'
-require_relative 'question'
-require_relative 'user'
 
 class QuestionLike
 
@@ -35,7 +33,20 @@ class QuestionLike
   end
 
   def self.num_likes_for_question_id(question_id)
-    self.likers_for_question_id(question_id).length
+    query = QuestionsDatabase.instance.execute(<<-SQL, question_id)
+      SELECT
+        COUNT(users.id) AS num
+      FROM
+        users
+      JOIN
+        question_likes ON users.id = question_likes.user_id
+      WHERE
+        question_likes.question_id = ?
+      GROUP BY
+        question_likes.question_id
+    SQL
+
+    query.first.nil? ? 0 : query.first['num']
   end
 
   def self.liked_questions_for_user_id(user_id)
@@ -51,6 +62,25 @@ class QuestionLike
     SQL
 
     query.each_with_object([]) do |data, questions|
+      questions << Question.new(data)
+    end
+  end
+
+  def self.most_liked_questions(n)
+    query = QuestionsDatabase.instance.execute(<<-SQL)
+    SELECT
+      questions.id, questions.title, questions.body, questions.user_id
+    FROM
+      questions
+    JOIN
+      question_like ON questions.id = question_like.question_id
+    GROUP BY
+      question_like.question_id
+    ORDER BY
+      COUNT(question_like.user_id)
+    SQL
+
+    query[0...n].each_with_object([]) do |data, questions|
       questions << Question.new(data)
     end
   end

@@ -1,9 +1,7 @@
 require_relative 'questions_database'
-require_relative 'user'
-require_relative 'reply'
-require_relative 'question_follower'
 
 class Question
+include Save
 
   def self.find_by_id(id)
     query = QuestionsDatabase.instance.execute(<<-SQL, id)
@@ -37,6 +35,10 @@ class Question
     QuestionFollower.most_followed_questions(n)
   end
 
+  def self.most_liked(n)
+    QuestionLike.most_liked_questions(n)
+  end
+
   attr_accessor :id, :title, :body, :user_id
 
   def initialize(options = {})
@@ -44,6 +46,10 @@ class Question
     @title = options['title']
     @body = options['body']
     @user_id = options['user_id']
+  end
+
+  def table
+    'questions'
   end
 
   def author
@@ -65,6 +71,14 @@ class Question
 
   def followers
     QuestionFollower.followers_for_question_id(@id)
+  end
+
+  def likers
+    QuestionLike.likers_for_question_id(@id)
+  end
+
+  def num_likes
+    QuestionLike.num_likes_for_question_id(@id)
   end
 
 end

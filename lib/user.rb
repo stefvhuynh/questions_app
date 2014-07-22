@@ -1,9 +1,7 @@
 require_relative 'questions_database'
-require_relative 'question'
-require_relative 'reply'
-require_relative 'question_follower'
 
 class User
+include Save
 
   def self.find_by_id(id)
     query = QuestionsDatabase.instance.execute(<<-SQL, id)
@@ -41,6 +39,10 @@ class User
     @last_name = options['last_name']
   end
 
+  def table
+    'users'
+  end
+
   def authored_questions
     Question.find_by_user_id(@id)
   end
@@ -51,6 +53,31 @@ class User
 
   def followed_questions
     QuestionFollower.followed_questions_for_user_id(@id)
+  end
+
+  def liked_questions
+    QuestionLike.liked_questions_for_user_id(@id)
+  end
+
+  def average_karma
+    query = QuestionsDatabase.instance.execute(<<-SQL, @id)
+    SELECT
+      (COUNT(question_likes.user_id) /
+      CAST(COUNT(DISTINCT question_likes.question_id) AS FLOAT)) AS avg
+    FROM
+      question_likes
+    WHERE
+      question_likes.question_id = (
+        SELECT
+          id
+        FROM
+          questions
+        WHERE
+          questions.user_id = ?
+      )
+    SQL
+
+    query.first['avg'].nil? ? 0 : query.first['avg']
   end
 
 end

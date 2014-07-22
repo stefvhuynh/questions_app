@@ -1,6 +1,7 @@
 require_relative 'questions_database'
 
 class Reply
+include Save
 
   def self.find_by_id(id)
     query = QuestionsDatabase.instance.execute(<<-SQL, id)
@@ -53,6 +54,10 @@ class Reply
     @user_id = options['user_id']
     @question_id = options['question_id']
     @reply_id = options['reply_id']
+  end
+
+  def table
+    'replies'
   end
 
   def author
